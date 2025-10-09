@@ -1,0 +1,28 @@
+#include <iostream>
+using namespace std;
+
+void thapHaNoi(int n, char tu, char den, char trungGian) {
+    if (n == 1) {
+        cout << "Chuyen dia 1 tu " << tu << " sang " << den << endl;
+        return;
+    }
+    thapHaNoi(n - 1, tu, trungGian, den);
+    cout << "Chuyen dia " << n << " tu " << tu << " sang " << den << endl;
+    thapHaNoi(n - 1, trungGian, den, tu);
+}
+
+int main() {
+    int soDia;
+    cout << "Nhap so dia: ";
+    cin >> soDia;
+
+    if (soDia <= 0) {
+        cout << "So dia phai lon hon 0!" << endl;
+        return 1;
+    }
+
+    cout << "\nCac buoc chuyen dia:\n";
+    thapHaNoi(soDia, 'A', 'C', 'B');
+    cout << "\nTong so buoc: " << (1 << soDia) - 1 << " buoc" << endl;
+    return 0;
+}
