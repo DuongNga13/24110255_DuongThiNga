@@ -1,0 +1,42 @@
+#include <iostream>
+#include <stack>
+using namespace std;
+
+struct NhiemVu {
+    int n;
+    char tu, den, trungGian;
+};
+
+void thapHaNoi(int n, char tu, char den, char trungGian) {
+    stack<NhiemVu> nganXep;
+    nganXep.push({n, tu, den, trungGian});
+    while (!nganXep.empty()) {
+        NhiemVu hienTai = nganXep.top();
+        nganXep.pop();
+        if (hienTai.n == 1) {
+            cout << "Chuyen dia 1 tu " << hienTai.tu << " sang " << hienTai.den << endl;
+            continue;
+        }
+        nganXep.push({hienTai.n - 1, hienTai.trungGian, hienTai.den, hienTai.tu});
+        nganXep.push({1, hienTai.tu, hienTai.den, hienTai.trungGian});
+        nganXep.push({hienTai.n - 1, hienTai.tu, hienTai.trungGian, hienTai.den});
+    }
+}
+
+int main() {
+    int soDia;
+    cout << "Nhap so dia: ";
+    cin >> soDia;
+
+    do {
+        cout << "Nhap so dia: ";
+        cin >> soDia;
+        if (soDia <= 0) {
+            cout << "So dia phai lon hon 0! Vui long nhap lai." << endl;
+        }
+    } while (soDia <= 0);
+    cout << endl << "Cac buoc chuyen dia: " << endl;
+    thapHaNoi(soDia, 'A', 'C', 'B');
+    cout << endl << "Tong so buoc: " << (1 << soDia) - 1 << " buoc" << endl;
+    return 0;
+}
