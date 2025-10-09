@@ -1,3 +1,4 @@
+//tính tổng từ 1 đến n
 #include <iostream>
 using namespace std;
 
