@@ -1,0 +1,41 @@
+#include <iostream>
+using namespace std;
+
+long long power(int a, int n) {
+    if (n == 0) {
+        return 1;
+    }
+    return a * power(a, n - 1);
+}
+
+int main() {
+    int a, n;
+    do {
+        cout << "Nhap co so a (so nguyen): ";
+        cin >> a;
+        if (cin.fail()){
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Loi! a phai la so nguyen.\n";
+        } else {
+            break;
+        }
+    } while (true);
+    do {
+        cout << "Nhap so mu n (> 0): ";
+        cin >> n;
+        
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Loi! Vui long nhap so nguyen.\n";
+        } else if (n < 0) {
+            cout << "Loi! So mu phai khong am.\n";
+        } else {
+            break;
+        }
+    } while (true);
+    long long result = power(a, n);
+    cout << "Ket qua phep tinh: " << a << "^" << n << " = " << result << endl;
+    return 0;
+}
