@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    int n, W;
+    cout << "Nhap so luong mon do: ";
+    cin >> n;
+    cout << "Nhap suc chua toi da cua tui: ";
+    cin >> W;
+
+    vector<int> w(n + 1), v(n + 1);
+
+    cout << "Nhap trong luong va gia tri tung mon:\n";
+    for (int i = 1; i <= n; i++) {
+        cout << "Mon " << i << " - Trong luong: ";
+        cin >> w[i];
+        cout << "        Gia tri: ";
+        cin >> v[i];
+    }
+
+    // Tạo bảng DP
+    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
+
+    // Quy hoạch động
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= W; j++) {
+            if (w[i] <= j)
+                dp[i][j] = max(dp[i - 1][j], v[i] + dp[i - 1][j - w[i]]);
+            else
+                dp[i][j] = dp[i - 1][j];
+        }
+    }
+
+    cout << "\n=== Bang quy hoach dong (DP Table) ===\n";
+    cout << setw(8) << "i\\W";
+    for (int j = 0; j <= W; j++)
+        cout << setw(5) << j;
+    cout << endl;
+
+    for (int i = 0; i <= n; i++) {
+        cout << setw(8) << i;
+        for (int j = 0; j <= W; j++) {
+            cout << setw(5) << dp[i][j];
+        }
+        cout << endl;
+    }
+
+    cout << "\nGia tri toi da co the dat duoc: " << dp[n][W] << endl;
+
+    return 0;
+}
