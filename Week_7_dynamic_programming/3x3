@@ -1,0 +1,31 @@
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    int n = 3;
+    int dp[4][4];
+
+    //Khởi tạo: hàng đầu tiên và cột đầu tiên chỉ có 1 đường đi
+    for (int i = 0; i <= n; i++) dp[i][0] = 1;
+    for (int j = 0; j <= n; j++) dp[0][j] = 1;
+
+    //Duyệt qua từng ô còn lại trong bảng
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+        }
+    }
+
+    //In bảng quy hoạch động
+    cout << "=== DP Table ===\n";
+    for (int i = 0; i <= n; i++) {
+        for (int j = 0; j <= n; j++) {
+            cout << setw(4) << dp[i][j];
+        }
+        cout << endl;
+    }
+
+    cout << "\nSo duong di tu goc tren trai den goc duoi phai: " << dp[n][n] << endl;
+    return 0;
+}
