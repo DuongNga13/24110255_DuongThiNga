@@ -1,0 +1,56 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int key;
+    Node* left;
+    Node* right;
+
+    Node(int k) {
+        key = k;
+        left = nullptr;
+        right = nullptr;
+    }
+};
+
+Node* insert_bst(Node* root, int newKey) {
+    if (root == nullptr) {
+        return new Node(newKey);
+    }
+
+    if (newKey < root->key) {
+        root->left = insert_bst(root->left, newKey);
+    } 
+
+    else if (newKey > root->key) {
+        root->right = insert_bst(root->right, newKey);
+    }
+    
+    return root; 
+}
+
+void inorder_traversal(Node* node) {
+    if (node == nullptr) return;
+    inorder_traversal(node->left);
+    cout << node->key << " ";
+    inorder_traversal(node->right);
+}
+
+int main() {
+    Node* root = nullptr;
+    cout << "--- THUC HIEN CHEN CAC KHOA VAO BST ---" << endl;
+    
+    root = insert_bst(root, 50);  
+    insert_bst(root, 30);        
+    insert_bst(root, 70);       
+    insert_bst(root, 20);        
+    insert_bst(root, 40);        
+    insert_bst(root, 60);       
+    insert_bst(root, 80);       
+
+    cout << "Cay sau khi chèn (In-order):" << endl;
+    inorder_traversal(root);
+    cout << endl;
+    
+    return 0;
+}
