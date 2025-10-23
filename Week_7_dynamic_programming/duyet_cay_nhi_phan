@@ -1,0 +1,68 @@
+#include <iostream>
+#include <string> 
+using namespace std;
+
+struct Node {
+    string key;
+    Node* left;
+    Node* right;
+
+    Node(string k) { 
+        key = k;
+        left = nullptr;
+        right = nullptr;
+    }
+};
+// Duyệt Tiền thứ tự (Pre-order: N - L - R)
+void preorder_traversal(Node* node) {
+    if (node == nullptr) {
+        return;
+    }
+    cout << node->key << " -> ";
+    preorder_traversal(node->left);
+    preorder_traversal(node->right);
+}
+
+// Duyệt Trung thứ tự (In-order: L - N - R)
+void inorder_traversal(Node* node) {
+    if (node == nullptr) {
+        return;
+    }
+    inorder_traversal(node->left);
+    cout << node->key << " -> ";
+    inorder_traversal(node->right);
+}
+
+// Duyệt Hậu thứ tự (Post-order: L - R - N)
+void postorder_traversal(Node* node) {
+    if (node == nullptr) {
+        return;
+    }
+    postorder_traversal(node->left);
+    postorder_traversal(node->right);
+    cout << node->key << " -> ";
+}
+
+int main() {
+    Node* root = new Node("A");
+    root->left = new Node("B");
+    root->right = new Node("C");
+    root->left->left = new Node("D");
+    root->right->left = new Node("E");
+    root->right->right = new Node("F");
+
+    cout << "--- KET QUA DUYET CAY ---" << endl;
+
+    cout << "1. Tien thu tu (NLR): ";
+    preorder_traversal(root);
+    cout << "END" << endl;
+
+    cout << "2. Trung thu tu (LNR): ";
+    inorder_traversal(root);
+    cout << "END" << endl; 
+
+    cout << "3. Hau thu tu (LRN): ";
+    postorder_traversal(root);
+    cout << "END" << endl; 
+    return 0;
+}
