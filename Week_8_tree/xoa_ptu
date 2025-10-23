@@ -1,0 +1,128 @@
+#include <iostream>
+
+using namespace std;
+
+struct Node {
+    int key;
+    Node* left;
+    Node* right;
+
+    Node(int k) {
+        key = k;
+        left = nullptr;
+        right = nullptr;
+    }
+};
+
+Node* findMin(Node* node) {
+    Node* current = node;
+    while (current && current->left != nullptr) {
+        current = current->left;
+    }
+    return current;
+}
+
+void preorder_traversal(Node* node) {
+    if (node == nullptr) return;
+    cout << node->key << " "; 
+    preorder_traversal(node->left);   
+    preorder_traversal(node->right);  
+}
+
+void inorder_traversal(Node* node) {
+    if (node == nullptr) return;
+    inorder_traversal(node->left);    
+    cout << node->key << " "; 
+    inorder_traversal(node->right);   
+}
+
+void postorder_traversal(Node* node) {
+    if (node == nullptr) return;
+    postorder_traversal(node->left);   
+    postorder_traversal(node->right);  
+    cout << node->key << " "; 
+}
+
+Node* insert_bst(Node* root, int newKey) {
+    if (root == nullptr) {
+        return new Node(newKey);
+    }
+    if (newKey < root->key) {
+        root->left = insert_bst(root->left, newKey);
+    } 
+    else if (newKey > root->key) {
+        root->right = insert_bst(root->right, newKey);
+    }
+    return root; 
+}
+
+Node* search_bst(Node* root, int searchKey) {
+    if (root == nullptr || root->key == searchKey) {
+        return root;
+    }
+    if (searchKey < root->key) {
+        return search_bst(root->left, searchKey);
+    } 
+    else {
+        return search_bst(root->right, searchKey);
+    }
+}
+
+Node* delete_bst_simple(Node* root, int key_to_delete) {
+    if (root == nullptr) {
+        return root; 
+    }
+
+    if (key_to_delete < root->key) {
+        root->left = delete_bst_simple(root->left, key_to_delete);
+    } else if (key_to_delete > root->key) {
+        root->right = delete_bst_simple(root->right, key_to_delete);
+    } 
+    else {
+        if (root->left == nullptr) {
+            Node* temp = root->right;
+            delete root;
+            return temp; 
+        } else if (root->right == nullptr) {
+            Node* temp = root->left;
+            delete root;
+            return temp; 
+        }
+
+        Node* successor = findMin(root->right);
+        root->key = successor->key; 
+        root->right = delete_bst_simple(root->right, successor->key);
+    }
+    return root; 
+}
+
+int main() {
+    Node* root = nullptr;
+
+    root = insert_bst(root, 50);
+    insert_bst(root, 30);
+    insert_bst(root, 70);
+    insert_bst(root, 20);
+    insert_bst(root, 40);
+    insert_bst(root, 60);
+    insert_bst(root, 80);
+
+    cout << "In-order: ";
+    inorder_traversal(root);
+    cout << endl;
+
+    int searchKey = 40;
+    Node* foundNode = search_bst(root, searchKey);
+    if (foundNode) {
+        cout << "Tim thay: " << searchKey << endl;
+    } 
+
+    int deleteKey = 70;
+    root = delete_bst_simple(root, deleteKey);
+    
+    cout << "In-order sau khi xoa " << deleteKey << ": ";
+    inorder_traversal(root);
+    cout << endl;
+
+    return 0;
+}
