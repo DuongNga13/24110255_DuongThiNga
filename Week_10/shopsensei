@@ -1,0 +1,273 @@
+# shopsensei.py
+import tkinter as tk
+from tkinter import ttk, messagebox
+from functools import partial
+
+# ---------- Data ----------
+products = [
+    {"id": 1, "name": "Áo Thun Nam Basic", "price": 199000, "category": "Fashion", "image": "👕", "rating": 4.5, "sold": 1234, "tags": ["thời trang", "nam"]},
+    {"id": 2, "name": "Giày Sneaker Trắng", "price": 599000, "category": "Fashion", "image": "👟", "rating": 4.8, "sold": 856, "tags": ["thời trang", "giày"]},
+    {"id": 3, "name": "Balo Laptop Cao Cấp", "price": 399000, "category": "Accessories", "image": "🎒", "rating": 4.6, "sold": 642, "tags": ["phụ kiện", "công nghệ"]},
+    {"id": 4, "name": "Tai Nghe Bluetooth", "price": 299000, "category": "Electronics", "image": "🎧", "rating": 4.7, "sold": 2341, "tags": ["điện tử", "âm thanh"]},
+    {"id": 5, "name": "Đồng Hồ Thông Minh", "price": 1299000, "category": "Electronics", "image": "⌚", "rating": 4.9, "sold": 445, "tags": ["điện tử", "thời trang"]},
+    {"id": 6, "name": "Ví Da Nam Cao Cấp", "price": 249000, "category": "Accessories", "image": "👛", "rating": 4.4, "sold": 789, "tags": ["phụ kiện", "da"]},
+    {"id": 7, "name": "Mũ Lưỡi Trai Unisex", "price": 129000, "category": "Fashion", "image": "🧢", "rating": 4.3, "sold": 1567, "tags": ["thời trang", "phụ kiện"]},
+    {"id": 8, "name": "Áo Khoác Hoodie", "price": 349000, "category": "Fashion", "image": "🧥", "rating": 4.6, "sold": 923, "tags": ["thời trang", "áo khoác"]},
+    {"id": 9, "name": "Dép Quai Ngang", "price": 89000, "category": "Fashion", "image": "🩴", "rating": 4.2, "sold": 2134, "tags": ["giày dép", "casual"]},
+    {"id": 10, "name": "Kính Mát Thời Trang", "price": 179000, "category": "Accessories", "image": "🕶️", "rating": 4.5, "sold": 567, "tags": ["phụ kiện", "thời trang"]},
+    {"id": 11, "name": "Váy Dạ Hội", "price": 599000, "category": "Fashion", "image": "👗", "rating": 4.7, "sold": 234, "tags": ["thời trang", "nữ"]},
+    {"id": 12, "name": "Chuột Không Dây", "price": 199000, "category": "Electronics", "image": "🖱️", "rating": 4.6, "sold": 1456, "tags": ["điện tử", "văn phòng"]},
+    {"id": 13, "name": "Bàn Phím Gaming RGB", "price": 799000, "category": "Electronics", "image": "⌨️", "rating": 4.8, "sold": 678, "tags": ["điện tử", "gaming"]},
+    {"id": 14, "name": "Nước Hoa Mini", "price": 149000, "category": "Beauty", "image": "🧴", "rating": 4.4, "sold": 892, "tags": ["làm đẹp", "nước hoa"]},
+    {"id": 15, "name": "Son Môi Lì", "price": 89000, "category": "Beauty", "image": "💄", "rating": 4.5, "sold": 1789, "tags": ["làm đẹp", "makeup"]},
+    {"id": 16, "name": "Kem Chống Nắng", "price": 199000, "category": "Beauty", "image": "☀️", "rating": 4.7, "sold": 2456, "tags": ["làm đẹp", "skincare"]},
+    {"id": 17, "name": "Túi Xách Nữ", "price": 449000, "category": "Accessories", "image": "👜", "rating": 4.6, "sold": 567, "tags": ["phụ kiện", "túi xách"]},
+    {"id": 18, "name": "Dây Chuyền Bạc", "price": 299000, "category": "Accessories", "image": "📿", "rating": 4.8, "sold": 345, "tags": ["phụ kiện", "trang sức"]},
+    {"id": 19, "name": "Loa Bluetooth Mini", "price": 399000, "category": "Electronics", "image": "🔊", "rating": 4.5, "sold": 1123, "tags": ["điện tử", "âm thanh"]},
+    {"id": 20, "name": "Sạc Dự Phòng 20000mAh", "price": 349000, "category": "Electronics", "image": "🔋", "rating": 4.7, "sold": 1890, "tags": ["điện tử", "phụ kiện"]},
+    {"id": 21, "name": "Ốp Lưng Silicon", "price": 49000, "category": "Accessories", "image": "📱", "rating": 4.3, "sold": 3456, "tags": ["phụ kiện", "điện thoại"]},
+    {"id": 22, "name": "Gương Trang Điểm LED", "price": 259000, "category": "Beauty", "image": "🪞", "rating": 4.6, "sold": 678, "tags": ["làm đẹp", "phụ kiện"]},
+    {"id": 23, "name": "Quần Jean Nam", "price": 349000, "category": "Fashion", "image": "👖", "rating": 4.4, "sold": 1234, "tags": ["thời trang", "nam"]},
+    {"id": 24, "name": "Vớ Cotton Cao Cấp", "price": 39000, "category": "Fashion", "image": "🧦", "rating": 4.2, "sold": 2890, "tags": ["thời trang", "phụ kiện"]},
+    {"id": 25, "name": "Thắt Lưng Da", "price": 179000, "category": "Accessories", "image": "⛓️", "rating": 4.5, "sold": 456, "tags": ["phụ kiện", "da"]},
+]
+
+# ---------- Helpers ----------
+def format_price(price):
+    return f"{price:,.0f} ₫"
+
+def get_recommendations(product):
+    same_category = [p for p in products if p["id"] != product["id"] and p["category"] == product["category"]]
+    related = [p for p in products if p["id"] != product["id"] and p["category"] != product["category"] and any(t in product["tags"] for t in p["tags"])]
+    trending = [p for p in products if p["id"] != product["id"] and p["sold"] > 1000]
+    recs = same_category[:3] + related[:2] + trending[:1]
+    # ensure unique and limit to 6
+    seen = set()
+    final = []
+    for r in recs:
+        if r["id"] not in seen:
+            final.append(r)
+            seen.add(r["id"])
+        if len(final) >= 6:
+            break
+    return final
+
+# ---------- App ----------
+class ShopSenseiApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("ShopSensei - Python Edition")
+        self.geometry("1100x700")
+        self.configure(bg="#F3F7FB")
+        self.liked = set()
+        self.cart = []
+        self.selected_product = None
+
+        self.setup_ui()
+
+    def setup_ui(self):
+        # Header
+        header = tk.Frame(self, bg="#4F46E5", height=80)
+        header.pack(fill="x", side="top")
+        header.pack_propagate(False)
+        title = tk.Label(header, text="ShopSensei", fg="white", bg="#4F46E5", font=("Inter", 22, "bold"))
+        subtitle = tk.Label(header, text="Tiêu tiền có phong cách", fg="#EDE9FE", bg="#4F46E5", font=("Inter", 10))
+        title.pack(anchor="w", padx=20, pady=(12,0))
+        subtitle.pack(anchor="w", padx=20)
+
+        # Main container
+        container = tk.Frame(self, bg=self["bg"])
+        container.pack(fill="both", expand=True, padx=16, pady=12)
+
+        # Left: products grid (scrollable)
+        left = tk.Frame(container, bg=self["bg"])
+        left.pack(side="top", fill="both", expand=True)
+
+        self.canvas = tk.Canvas(left, bg=self["bg"], highlightthickness=0)
+        self.scroll_frame = tk.Frame(self.canvas, bg=self["bg"])
+        self.vsb = ttk.Scrollbar(left, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.create_window((0,0), window=self.scroll_frame, anchor="nw")
+        self.scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        # Footer area (for cart summary)
+        footer = tk.Frame(self, bg="#F3F7FB", height=70)
+        footer.pack(fill="x", side="bottom")
+        footer.pack_propagate(False)
+        self.cart_label = tk.Label(footer, text="Giỏ hàng: 0 sản phẩm", bg="#F3F7FB", font=("Inter", 12))
+        self.cart_label.pack(side="right", padx=20)
+
+        # Initially show products
+        self.show_product_grid()
+
+    def clear_scroll_frame(self):
+        for w in self.scroll_frame.winfo_children():
+            w.destroy()
+
+    def show_product_grid(self):
+        self.selected_product = None
+        self.clear_scroll_frame()
+        title_frame = tk.Frame(self.scroll_frame, bg=self["bg"])
+        title_frame.pack(fill="x", pady=(6,12))
+        tk.Label(title_frame, text="Khám Phá Sản Phẩm", font=("Inter", 20, "bold"), bg=self["bg"]).pack()
+        tk.Label(title_frame, text="Chọn sản phẩm để xem gợi ý phù hợp với bạn", bg=self["bg"], fg="#6B7280").pack()
+
+        # Grid of product cards
+        card_container = tk.Frame(self.scroll_frame, bg=self["bg"])
+        card_container.pack(pady=10, padx=10, fill="both")
+
+        cols = 4
+        for idx, p in enumerate(products):
+            r = idx // cols
+            c = idx % cols
+            card = self.build_product_card(card_container, p)
+            card.grid(row=r, column=c, padx=10, pady=10, sticky="nsew")
+
+        # make columns expand evenly
+        for i in range(cols):
+            card_container.grid_columnconfigure(i, weight=1)
+
+    def build_product_card(self, parent, product):
+        card = tk.Frame(parent, bg="white", bd=0, relief="flat", highlightthickness=0)
+        card.configure(width=240, height=220)
+        # top image area
+        top = tk.Frame(card, bg="#EFF6FF", height=110)
+        top.pack(fill="x")
+        top.pack_propagate(False)
+        img_lbl = tk.Label(top, text=product["image"], font=("Arial", 36), bg="#EFF6FF")
+        img_lbl.pack(expand=True)
+
+        # like button top-right
+        like_btn = tk.Button(top, text="♥" if product["id"] in self.liked else "♡",
+                             bd=0, relief="flat", bg="#EFF6FF", command=lambda pid=product["id"]: self.toggle_like(pid))
+        like_btn.place(relx=0.92, rely=0.08, anchor="ne")
+
+        # sold badge
+        if product["sold"] > 1000:
+            sold_badge = tk.Label(top, text="Hot", bg="#FB7185", fg="white", font=("Inter", 9, "bold"))
+            sold_badge.place(relx=0.02, rely=0.08)
+
+        # bottom info
+        info = tk.Frame(card, bg="white", padx=8, pady=8)
+        info.pack(fill="both", expand=True)
+
+        name = tk.Label(info, text=product["name"], bg="white", anchor="w", justify="left", wraplength=200, font=("Inter", 11, "bold"))
+        name.pack(fill="x")
+
+        rating = tk.Label(info, text=f"⭐ {product['rating']}   Đã bán {product['sold']}", bg="white", fg="#6B7280", font=("Inter", 9))
+        rating.pack(anchor="w", pady=(4,0))
+
+        bottom = tk.Frame(info, bg="white")
+        bottom.pack(fill="x", pady=(8,0))
+        price = tk.Label(bottom, text=format_price(product["price"]), bg="white", fg="#F97316", font=("Inter", 12, "bold"))
+        price.pack(side="left")
+
+        view_btn = tk.Button(bottom, text="Xem", bg="#4F46E5", fg="white", bd=0, padx=8, pady=6,
+                             command=lambda prod=product: self.show_product_detail(prod))
+        view_btn.pack(side="right")
+
+        # card clickable (except buttons) — bind click on card
+        def on_card_click(e, prod=product):
+            self.show_product_detail(prod)
+
+        card.bind("<Button-1>", on_card_click)
+        for child in card.winfo_children():
+            child.bind("<Button-1>", on_card_click)
+
+        return card
+
+    def toggle_like(self, product_id):
+        if product_id in self.liked:
+            self.liked.remove(product_id)
+        else:
+            self.liked.add(product_id)
+        self.show_product_grid()  # refresh grid to update like symbols
+
+    def show_product_detail(self, product):
+        self.selected_product = product
+        self.clear_scroll_frame()
+
+        # Back button
+        topbar = tk.Frame(self.scroll_frame, bg=self["bg"])
+        topbar.pack(fill="x", pady=(4,8))
+        back_btn = tk.Button(topbar, text="← Quay lại tất cả sản phẩm", bd=0, bg=self["bg"], fg="#2563EB",
+                             command=self.show_product_grid)
+        back_btn.pack(anchor="w")
+
+        # Detail card
+        detail = tk.Frame(self.scroll_frame, bg="white", bd=0, relief="flat", padx=16, pady=16)
+        detail.pack(fill="x", pady=(6,12))
+
+        left = tk.Frame(detail, bg="#EEF2FF", width=300, height=260)
+        left.pack(side="left", padx=8, pady=8)
+        left.pack_propagate(False)
+        tk.Label(left, text=product["image"], font=("Arial", 80), bg="#EEF2FF").pack(expand=True)
+
+        right = tk.Frame(detail, bg="white")
+        right.pack(side="left", fill="both", expand=True, padx=12)
+
+        cat = tk.Label(right, text=product["category"], bg="#DBEAFE", fg="#1E3A8A", padx=8, pady=4)
+        cat.pack(anchor="w")
+        tk.Label(right, text=product["name"], font=("Inter", 18, "bold"), bg="white").pack(anchor="w", pady=(8,0))
+        tk.Label(right, text=f"⭐ {product['rating']}   |   Đã bán {product['sold']}", fg="#6B7280", bg="white").pack(anchor="w", pady=(4,8))
+
+        tk.Label(right, text=format_price(product["price"]), font=("Inter", 20, "bold"), fg="#F97316", bg="white").pack(anchor="w", pady=(6,12))
+
+        # tags
+        tags_frame = tk.Frame(right, bg="white")
+        tags_frame.pack(anchor="w", pady=(0,12))
+        for t in product["tags"]:
+            tk.Label(tags_frame, text=f"#{t}", bg="#DBEAFE", fg="#1E40AF", padx=8, pady=4).pack(side="left", padx=4)
+
+        # action buttons
+        actions = tk.Frame(right, bg="white", pady=8)
+        actions.pack(fill="x", pady=(12,0))
+        buy_btn = tk.Button(actions, text="Mua Ngay", bg="#FB923C", fg="white", bd=0, padx=12, pady=10,
+                            command=lambda p=product: self.buy_now(p))
+        buy_btn.pack(side="left", padx=(0,8), expand=True, fill="x")
+        add_btn = tk.Button(actions, text="Thêm Vào Giỏ", bg="#4F46E5", fg="white", bd=0, padx=12, pady=10,
+                            command=lambda p=product: self.add_to_cart(p))
+        add_btn.pack(side="left", expand=True, fill="x")
+
+        # Recommendations
+        recs = get_recommendations(product)
+        rec_frame = tk.Frame(self.scroll_frame, bg=self["bg"])
+        rec_frame.pack(fill="x", pady=(12,6))
+        tk.Label(rec_frame, text="Sản Phẩm Bạn Có Thể Quan Tâm", font=("Inter", 14, "bold"), bg=self["bg"]).pack(anchor="w", padx=8, pady=(6,8))
+        grid = tk.Frame(rec_frame, bg=self["bg"])
+        grid.pack(padx=8)
+        for i, r in enumerate(recs):
+            card = self.build_recommendation_card(grid, r)
+            card.grid(row=0, column=i, padx=6)
+
+    def build_recommendation_card(self, parent, product):
+        card = tk.Frame(parent, bg="white", width=180, height=200)
+        card.pack_propagate(False)
+        top = tk.Frame(card, bg="#EFF6FF", height=90)
+        top.pack(fill="x")
+        top.pack_propagate(False)
+        tk.Label(top, text=product["image"], font=("Arial", 36), bg="#EFF6FF").pack(expand=True)
+        info = tk.Frame(card, bg="white", padx=6, pady=6)
+        info.pack(fill="both", expand=True)
+        tk.Label(info, text=product["name"], bg="white", wraplength=160, font=("Inter", 10, "bold")).pack(anchor="w")
+        tk.Label(info, text=format_price(product["price"]), bg="white", fg="#F97316").pack(anchor="w", pady=(6,0))
+        view_btn = tk.Button(info, text="Xem", bg="#06B6D4", fg="white", bd=0,
+                             command=lambda p=product: self.show_product_detail(p))
+        view_btn.pack(side="right", pady=(8,0))
+        return card
+
+    def add_to_cart(self, product):
+        self.cart.append(product)
+        self.cart_label.config(text=f"Giỏ hàng: {len(self.cart)} sản phẩm")
+        messagebox.showinfo("Đã thêm", f"Đã thêm \"{product['name']}\" vào giỏ hàng.")
+
+    def buy_now(self, product):
+        messagebox.showinfo("Mua ngay", f"Thanh toán giả lập cho \"{product['name']}\" — {format_price(product['price'])}\n\nCảm ơn bạn đã mua hàng!")
+        # in thực tế thì sẽ chuyển sang form thanh toán
+
+if __name__ == "__main__":
+    app = ShopSenseiApp()
+    app.mainloop()
