@@ -1,0 +1,549 @@
+import os
+import json
+from datetime import datetime
+
+class ShopesenseiBackend:
+    def __init__(self):
+        self.users = {}
+        self.products = {}
+        self.orders = {}
+        self.cart = {}
+        self.current_user = None
+        self.product_id_counter = 1
+        self.order_id_counter = 1
+        
+        # Thêm sẵn một số sản phẩm mẫu
+        self._init_sample_data()
+    
+    def _init_sample_data(self):
+        """Khởi tạo dữ liệu mẫu"""
+        sample_products = [
+            {"name": "iPhone 15 Pro", "price": 25000000, "stock": 10, "category": "Điện thoại"},
+            {"name": "Samsung Galaxy S24", "price": 20000000, "stock": 15, "category": "Điện thoại"},
+            {"name": "Áo thun nam", "price": 150000, "stock": 50, "category": "Thời trang"},
+            {"name": "Giày sneaker", "price": 500000, "stock": 30, "category": "Giày dép"},
+            {"name": "Tai nghe AirPods", "price": 4000000, "stock": 20, "category": "Phụ kiện"},
+        ]
+        
+        for product in sample_products:
+            self.products[self.product_id_counter] = product
+            self.product_id_counter += 1
+    
+    def clear_screen(self):
+        """Xóa màn hình terminal"""
+        os.system('cls' if os.name == 'nt' else 'clear')
+    
+    def display_header(self, title):
+        """Hiển thị header"""
+        print("\n" + "="*60)
+        print(f"{'🛍️  SHOPSENSEI':^60}")
+        print("="*60)
+        print(f"{title:^60}")
+        print("="*60 + "\n")
+    
+    def register_user(self):
+        """Đăng ký người dùng mới"""
+        self.clear_screen()
+        self.display_header("ĐĂNG KÝ TÀI KHOẢN")
+        
+        username = input("Nhập tên đăng nhập: ").strip()
+        if username in self.users:
+            print("❌ Tên đăng nhập đã tồn tại!")
+            input("\nNhấn Enter để tiếp tục...")
+            return False
+        
+        password = input("Nhập mật khẩu: ").strip()
+        email = input("Nhập email: ").strip()
+        phone = input("Nhập số điện thoại: ").strip()
+        
+        self.users[username] = {
+            "password": password,
+            "email": email,
+            "phone": phone,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.cart[username] = []
+        
+        print(f"\n✅ Đăng ký thành công! Chào mừng {username}")
+        input("\nNhấn Enter để tiếp tục...")
+        return True
+    
+    def login(self):
+        """Đăng nhập"""
+        self.clear_screen()
+        self.display_header("ĐĂNG NHẬP")
+        
+        username = input("Tên đăng nhập: ").strip()
+        password = input("Mật khẩu: ").strip()
+        
+        if username in self.users and self.users[username]["password"] == password:
+            self.current_user = username
+            print(f"\n✅ Đăng nhập thành công! Xin chào {username}")
+            input("\nNhấn Enter để tiếp tục...")
+            return True
+        else:
+            print("\n❌ Sai tên đăng nhập hoặc mật khẩu!")
+            input("\nNhấn Enter để tiếp tục...")
+            return False
+    
+    def view_products(self):
+        """Xem danh sách sản phẩm"""
+        self.clear_screen()
+        self.display_header("DANH SÁCH SẢN PHẨM")
+        
+        if not self.products:
+            print("Chưa có sản phẩm nào!")
+            input("\nNhấn Enter để quay lại...")
+            return
+        
+        print(f"{'ID':<5} {'Tên sản phẩm':<30} {'Giá':<15} {'Kho':<10} {'Danh mục':<15}")
+        print("-" * 75)
+        
+        for pid, product in self.products.items():
+            print(f"{pid:<5} {product['name']:<30} {product['price']:>12,}đ {product['stock']:>8} {product['category']:<15}")
+        
+        print("\nChọn hành động:")
+        print("1. Thêm sản phẩm vào giỏ hàng")
+        print("2. Tìm kiếm sản phẩm")
+        print("0. Quay lại")
+        
+        choice = input("\nNhập lựa chọn: ").strip()
+        
+        if choice == "1":
+            self.add_to_cart()
+        elif choice == "2":
+            self.search_products()
+    
+    def search_products(self):
+        """Tìm kiếm sản phẩm"""
+        keyword = input("\nNhập từ khóa tìm kiếm: ").strip().lower()
+        
+        results = {pid: p for pid, p in self.products.items() 
+                   if keyword in p['name'].lower() or keyword in p['category'].lower()}
+        
+        if results:
+            print(f"\n🔍 Tìm thấy {len(results)} sản phẩm:\n")
+            print(f"{'ID':<5} {'Tên sản phẩm':<30} {'Giá':<15} {'Kho':<10}")
+            print("-" * 60)
+            for pid, product in results.items():
+                print(f"{pid:<5} {product['name']:<30} {product['price']:>12,}đ {product['stock']:>8}")
+            
+            # Hiển thị gợi ý sản phẩm
+            self.show_recommendations(results)
+        else:
+            print("\n❌ Không tìm thấy sản phẩm nào!")
+            # Vẫn hiển thị gợi ý dựa trên từ khóa
+            self.show_recommendations({})
+        
+        input("\nNhấn Enter để tiếp tục...")
+    
+    def show_recommendations(self, search_results):
+        """Hiển thị sản phẩm gợi ý"""
+        print("\n" + "="*60)
+        print("💡 SẢN PHẨM GỢI Ý CHO BẠN")
+        print("="*60)
+        
+        # Lấy danh mục từ kết quả tìm kiếm
+        categories = set()
+        for product in search_results.values():
+            categories.add(product['category'])
+        
+        # Nếu không có kết quả tìm kiếm, lấy sản phẩm phổ biến
+        if not categories:
+            print("\n🔥 Sản phẩm phổ biến:\n")
+            recommended = list(self.products.items())[:5]
+            
+            if recommended:
+                print(f"{'ID':<5} {'Tên sản phẩm':<30} {'Giá':<15} {'Danh mục':<15}")
+                print("-" * 65)
+                for pid, product in recommended:
+                    print(f"{pid:<5} {product['name']:<30} {product['price']:>12,}đ {product['category']:<15}")
+        else:
+            # Gợi ý sản phẩm cùng danh mục (loại trừ sản phẩm đã có trong kết quả tìm kiếm)
+            same_category = [(pid, p) for pid, p in self.products.items() 
+                           if p['category'] in categories and pid not in search_results]
+            
+            # Lấy sản phẩm từ danh mục khác
+            other_category = [(pid, p) for pid, p in self.products.items() 
+                            if pid not in search_results and p['category'] not in categories]
+            
+            # Hiển thị sản phẩm cùng danh mục
+            if same_category:
+                print(f"\n🎯 Sản phẩm cùng danh mục ({', '.join(categories)}):\n")
+                print(f"{'ID':<5} {'Tên sản phẩm':<30} {'Giá':<15} {'Danh mục':<15}")
+                print("-" * 65)
+                for pid, product in same_category[:5]:
+                    print(f"{pid:<5} {product['name']:<30} {product['price']:>12,}đ {product['category']:<15}")
+            
+            # Hiển thị sản phẩm danh mục khác (nếu cần)
+            if len(same_category) < 5 and other_category:
+                print(f"\n🎁 Có thể bạn cũng thích:\n")
+                print(f"{'ID':<5} {'Tên sản phẩm':<30} {'Giá':<15} {'Danh mục':<15}")
+                print("-" * 65)
+                remaining = 5 - len(same_category)
+                for pid, product in other_category[:remaining]:
+                    print(f"{pid:<5} {product['name']:<30} {product['price']:>12,}đ {product['category']:<15}")
+            
+            # Nếu không có gợi ý nào
+            if not same_category and not other_category:
+                print("\nKhông có sản phẩm gợi ý nào!")
+    
+    def add_to_cart(self):
+        """Thêm sản phẩm vào giỏ hàng"""
+        if not self.current_user:
+            print("\n❌ Vui lòng đăng nhập để thêm vào giỏ hàng!")
+            input("\nNhấn Enter để tiếp tục...")
+            return
+        
+        try:
+            pid = int(input("\nNhập ID sản phẩm: "))
+            if pid not in self.products:
+                print("❌ Sản phẩm không tồn tại!")
+                input("\nNhấn Enter để tiếp tục...")
+                return
+            
+            quantity = int(input("Nhập số lượng: "))
+            if quantity <= 0:
+                print("❌ Số lượng phải lớn hơn 0!")
+                input("\nNhấn Enter để tiếp tục...")
+                return
+            
+            if quantity > self.products[pid]['stock']:
+                print(f"❌ Không đủ hàng! Còn lại: {self.products[pid]['stock']}")
+                input("\nNhấn Enter để tiếp tục...")
+                return
+            
+            # Kiểm tra sản phẩm đã có trong giỏ chưa
+            existing = next((item for item in self.cart[self.current_user] if item['product_id'] == pid), None)
+            if existing:
+                existing['quantity'] += quantity
+            else:
+                self.cart[self.current_user].append({
+                    'product_id': pid,
+                    'quantity': quantity
+                })
+            
+            print(f"\n✅ Đã thêm {quantity} {self.products[pid]['name']} vào giỏ hàng!")
+            input("\nNhấn Enter để tiếp tục...")
+        except ValueError:
+            print("❌ Vui lòng nhập số hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+    
+    def view_cart(self):
+        """Xem giỏ hàng"""
+        self.clear_screen()
+        self.display_header("GIỎ HÀNG CỦA BẠN")
+        
+        if not self.current_user:
+            print("❌ Vui lòng đăng nhập!")
+            input("\nNhấn Enter để tiếp tục...")
+            return
+        
+        cart_items = self.cart.get(self.current_user, [])
+        
+        if not cart_items:
+            print("Giỏ hàng trống!")
+            input("\nNhấn Enter để quay lại...")
+            return
+        
+        total = 0
+        print(f"{'Sản phẩm':<30} {'Số lượng':<10} {'Đơn giá':<15} {'Thành tiền':<15}")
+        print("-" * 70)
+        
+        for item in cart_items:
+            product = self.products[item['product_id']]
+            subtotal = product['price'] * item['quantity']
+            total += subtotal
+            print(f"{product['name']:<30} {item['quantity']:<10} {product['price']:>12,}đ {subtotal:>12,}đ")
+        
+        print("-" * 70)
+        print(f"{'TỔNG CỘNG:':<55} {total:>12,}đ")
+        
+        print("\nChọn hành động:")
+        print("1. Thanh toán")
+        print("2. Xóa sản phẩm khỏi giỏ hàng")
+        print("0. Quay lại")
+        
+        choice = input("\nNhập lựa chọn: ").strip()
+        
+        if choice == "1":
+            self.checkout()
+        elif choice == "2":
+            self.remove_from_cart()
+    
+    def remove_from_cart(self):
+        """Xóa sản phẩm khỏi giỏ hàng"""
+        try:
+            pid = int(input("\nNhập ID sản phẩm muốn xóa: "))
+            cart_items = self.cart[self.current_user]
+            
+            for i, item in enumerate(cart_items):
+                if item['product_id'] == pid:
+                    del cart_items[i]
+                    print(f"\n✅ Đã xóa {self.products[pid]['name']} khỏi giỏ hàng!")
+                    input("\nNhấn Enter để tiếp tục...")
+                    return
+            
+            print("❌ Không tìm thấy sản phẩm trong giỏ hàng!")
+            input("\nNhấn Enter để tiếp tục...")
+        except ValueError:
+            print("❌ Vui lòng nhập số hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+    
+    def checkout(self):
+        """Thanh toán"""
+        self.clear_screen()
+        self.display_header("THANH TOÁN")
+        
+        cart_items = self.cart[self.current_user]
+        total = sum(self.products[item['product_id']]['price'] * item['quantity'] for item in cart_items)
+        
+        print(f"Tổng tiền: {total:,}đ")
+        print("\nPhương thức thanh toán:")
+        print("1. Thanh toán khi nhận hàng (COD)")
+        print("2. Chuyển khoản ngân hàng")
+        print("3. Ví điện tử")
+        
+        payment = input("\nChọn phương thức thanh toán: ").strip()
+        
+        if payment not in ["1", "2", "3"]:
+            print("❌ Phương thức thanh toán không hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+            return
+        
+        address = input("Nhập địa chỉ giao hàng: ").strip()
+        
+        # Tạo đơn hàng
+        order_id = self.order_id_counter
+        self.orders[order_id] = {
+            "user": self.current_user,
+            "items": cart_items.copy(),
+            "total": total,
+            "payment_method": ["COD", "Chuyển khoản", "Ví điện tử"][int(payment)-1],
+            "address": address,
+            "status": "Chờ xác nhận",
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.order_id_counter += 1
+        
+        # Cập nhật kho
+        for item in cart_items:
+            self.products[item['product_id']]['stock'] -= item['quantity']
+        
+        # Xóa giỏ hàng
+        self.cart[self.current_user] = []
+        
+        print(f"\n✅ Đặt hàng thành công! Mã đơn hàng: #{order_id}")
+        print(f"Tổng tiền: {total:,}đ")
+        print(f"Địa chỉ: {address}")
+        input("\nNhấn Enter để tiếp tục...")
+    
+    def view_orders(self):
+        """Xem đơn hàng"""
+        self.clear_screen()
+        self.display_header("ĐỖN HÀNG CỦA BẠN")
+        
+        if not self.current_user:
+            print("❌ Vui lòng đăng nhập!")
+            input("\nNhấn Enter để tiếp tục...")
+            return
+        
+        user_orders = {oid: o for oid, o in self.orders.items() if o['user'] == self.current_user}
+        
+        if not user_orders:
+            print("Bạn chưa có đơn hàng nào!")
+            input("\nNhấn Enter để quay lại...")
+            return
+        
+        for oid, order in user_orders.items():
+            print(f"\n📦 Đơn hàng #{oid}")
+            print(f"Trạng thái: {order['status']}")
+            print(f"Ngày đặt: {order['created_at']}")
+            print(f"Tổng tiền: {order['total']:,}đ")
+            print(f"Thanh toán: {order['payment_method']}")
+            print(f"Địa chỉ: {order['address']}")
+            print("Sản phẩm:")
+            for item in order['items']:
+                product = self.products[item['product_id']]
+                print(f"  - {product['name']} x{item['quantity']}")
+            print("-" * 60)
+        
+        input("\nNhấn Enter để quay lại...")
+    
+    def seller_menu(self):
+        """Menu người bán"""
+        while True:
+            self.clear_screen()
+            self.display_header("QUẢN LÝ NGƯỜI BÁN")
+            
+            print("1. Thêm sản phẩm mới")
+            print("2. Xem danh sách sản phẩm")
+            print("3. Cập nhật sản phẩm")
+            print("4. Xóa sản phẩm")
+            print("5. Xem đơn hàng")
+            print("0. Quay lại")
+            
+            choice = input("\nNhập lựa chọn: ").strip()
+            
+            if choice == "1":
+                self.add_product()
+            elif choice == "2":
+                self.view_products()
+            elif choice == "3":
+                self.update_product()
+            elif choice == "4":
+                self.delete_product()
+            elif choice == "5":
+                self.view_all_orders()
+            elif choice == "0":
+                break
+    
+    def add_product(self):
+        """Thêm sản phẩm mới"""
+        self.clear_screen()
+        self.display_header("THÊM SẢN PHẨM MỚI")
+        
+        name = input("Tên sản phẩm: ").strip()
+        try:
+            price = int(input("Giá (VNĐ): "))
+            stock = int(input("Số lượng: "))
+            category = input("Danh mục: ").strip()
+            
+            self.products[self.product_id_counter] = {
+                "name": name,
+                "price": price,
+                "stock": stock,
+                "category": category
+            }
+            
+            print(f"\n✅ Đã thêm sản phẩm #{self.product_id_counter} thành công!")
+            self.product_id_counter += 1
+            input("\nNhấn Enter để tiếp tục...")
+        except ValueError:
+            print("❌ Vui lòng nhập số hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+    
+    def update_product(self):
+        """Cập nhật sản phẩm"""
+        self.clear_screen()
+        self.display_header("CẬP NHẬT SẢN PHẨM")
+        
+        try:
+            pid = int(input("Nhập ID sản phẩm: "))
+            if pid not in self.products:
+                print("❌ Sản phẩm không tồn tại!")
+                input("\nNhấn Enter để tiếp tục...")
+                return
+            
+            product = self.products[pid]
+            print(f"\nSản phẩm hiện tại: {product['name']}")
+            print(f"Giá: {product['price']:,}đ | Kho: {product['stock']} | Danh mục: {product['category']}")
+            
+            print("\nNhập thông tin mới (Enter để giữ nguyên):")
+            name = input(f"Tên [{product['name']}]: ").strip()
+            price = input(f"Giá [{product['price']:,}đ]: ").strip()
+            stock = input(f"Kho [{product['stock']}]: ").strip()
+            category = input(f"Danh mục [{product['category']}]: ").strip()
+            
+            if name:
+                product['name'] = name
+            if price:
+                product['price'] = int(price)
+            if stock:
+                product['stock'] = int(stock)
+            if category:
+                product['category'] = category
+            
+            print("\n✅ Cập nhật sản phẩm thành công!")
+            input("\nNhấn Enter để tiếp tục...")
+        except ValueError:
+            print("❌ Vui lòng nhập số hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+    
+    def delete_product(self):
+        """Xóa sản phẩm"""
+        try:
+            pid = int(input("\nNhập ID sản phẩm muốn xóa: "))
+            if pid in self.products:
+                product_name = self.products[pid]['name']
+                del self.products[pid]
+                print(f"\n✅ Đã xóa sản phẩm {product_name}!")
+            else:
+                print("❌ Sản phẩm không tồn tại!")
+            input("\nNhấn Enter để tiếp tục...")
+        except ValueError:
+            print("❌ Vui lòng nhập số hợp lệ!")
+            input("\nNhấn Enter để tiếp tục...")
+    
+    def view_all_orders(self):
+        """Xem tất cả đơn hàng"""
+        self.clear_screen()
+        self.display_header("TẤT CẢ ĐƠN HÀNG")
+        
+        if not self.orders:
+            print("Chưa có đơn hàng nào!")
+            input("\nNhấn Enter để quay lại...")
+            return
+        
+        for oid, order in self.orders.items():
+            print(f"\n📦 Đơn hàng #{oid}")
+            print(f"Khách hàng: {order['user']}")
+            print(f"Trạng thái: {order['status']}")
+            print(f"Tổng tiền: {order['total']:,}đ")
+            print(f"Ngày đặt: {order['created_at']}")
+            print("-" * 60)
+        
+        input("\nNhấn Enter để quay lại...")
+    
+    def run(self):
+        """Chạy ứng dụng"""
+        while True:
+            self.clear_screen()
+            self.display_header("MENU CHÍNH")
+            
+            if self.current_user:
+                print(f"👤 Đăng nhập: {self.current_user}\n")
+                print("1. Xem sản phẩm")
+                print("2. Giỏ hàng")
+                print("3. Đơn hàng của tôi")
+                print("4. Quản lý người bán")
+                print("5. Đăng xuất")
+                print("0. Thoát")
+            else:
+                print("1. Đăng nhập")
+                print("2. Đăng ký")
+                print("3. Xem sản phẩm (khách)")
+                print("0. Thoát")
+            
+            choice = input("\nNhập lựa chọn: ").strip()
+            
+            if not self.current_user:
+                if choice == "1":
+                    self.login()
+                elif choice == "2":
+                    self.register_user()
+                elif choice == "3":
+                    self.view_products()
+                elif choice == "0":
+                    print("\n👋 Cảm ơn bạn đã sử dụng Shopsensei!")
+                    break
+            else:
+                if choice == "1":
+                    self.view_products()
+                elif choice == "2":
+                    self.view_cart()
+                elif choice == "3":
+                    self.view_orders()
+                elif choice == "4":
+                    self.seller_menu()
+                elif choice == "5":
+                    self.current_user = None
+                    print("\n✅ Đã đăng xuất!")
+                    input("\nNhấn Enter để tiếp tục...")
+                elif choice == "0":
+                    print("\n👋 Cảm ơn bạn đã sử dụng Shopsensei!")
+                    break
+
+if __name__ == "__main__":
+    app = ShopesenseiBackend()
+    app.run()
